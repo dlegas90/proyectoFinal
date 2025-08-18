@@ -6,6 +6,9 @@ import { parse } from 'csv-parse/sync';
 import { stringify } from 'csv-stringify/sync';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import rateLimit from 'express-rate-limit';
+import { body, validationResult } from 'express-validator';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -13,18 +16,48 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = 3001;
 
+// --- Rate Limiter ---
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'Demasiadas peticiones, intenta de nuevo más tarde.'
+  }
+});
+
+// Aplica limitador globalmente (o cámbialo a rutas concretas)
+app.use(apiLimiter);
+
+// --- Middleware estándar ---
 app.use(cors());
 app.use(express.json());
 
 const upload = multer({ storage: multer.memoryStorage() });
-
 let data = []; // Simula una base de datos en memoria
 
 // Cargar CSV
 app.post('/upload', upload.single('file'), (req, res) => {
   try {
     const content = req.file.buffer.toString();
-    data = parse(content, { columns: true, skip_empty_lines: true });
+    let parsed = parse(content, { columns: true, skip_empty_lines: true });
+
+    // Normaliza los nombres de columna y elimina 'ID'/'id'
+    let nextId = 1;
+    parsed = parsed.map(row => {
+      const normalized = {};
+      Object.entries(row).forEach(([key, value]) => {
+        const k = key.trim().toLowerCase();
+        if (k !== 'id') normalized[k] = value;
+      });
+      return {
+        ...normalized,
+        id: nextId++,
+      };
+    });
+
+    data = parsed;
     res.json({ message: 'Datos cargados', data });
   } catch (err) {
     res.status(400).json({ error: 'Error al procesar el archivo CSV' });
@@ -33,14 +66,66 @@ app.post('/upload', upload.single('file'), (req, res) => {
 
 // Obtener datos
 app.get('/data', (req, res) => {
-  res.json(data);
+  let { page = 1, limit = 10, sortBy = 'id', order = 'asc' } = req.query;
+  page = Number(page);
+  limit = Number(limit);
+
+  // Ordenamiento
+  let sorted = [...data];
+  if (sortBy && sorted.length > 0 && sorted[0][sortBy] !== undefined) {
+    sorted.sort((a, b) => {
+      if (order === 'desc') {
+        return a[sortBy] < b[sortBy] ? 1 : a[sortBy] > b[sortBy] ? -1 : 0;
+      }
+      return a[sortBy] > b[sortBy] ? 1 : a[sortBy] < b[sortBy] ? -1 : 0;
+    });
+  }
+
+  // Paginación
+  const start = (page - 1) * limit;
+  const paginated = sorted.slice(start, start + limit);
+
+  res.json({
+    data: paginated,
+    total: sorted.length,
+    page,
+    limit,
+    sortBy,
+    order
+  });
 });
 
 // Crear nuevo registro
-app.post('/data', (req, res) => {
-  data.push(req.body);
-  res.json({ message: 'Registro agregado', data });
-});
+app.post(
+  '/data',
+  [
+    body('nombre').notEmpty().withMessage('El nombre es requerido'),
+    body('precio').notEmpty().withMessage('El precio es requerido'),
+    body('stock').notEmpty().withMessage('El stock es requerido'),
+  ],
+  (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      // Devuelve todos los mensajes de error
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    // Prevención de duplicados por nombre
+    const existe = data.some(row => row.nombre === req.body.nombre);
+    if (existe) {
+      return res.status(409).json({
+        errors: [{ msg: 'Ya existe un registro con ese nombre.' }]
+      });
+    }
+
+    // Asigna un id incremental
+    const newId = data.length > 0 ? Math.max(...data.map(r => Number(r.id) || 0)) + 1 : 1;
+    const nuevoRegistro = { id: newId, ...req.body };
+
+    data.push(nuevoRegistro);
+    res.json({ message: 'Registro agregado', data }); // <-- data es el array completo
+  }
+);
 
 // Actualizar registro
 app.put('/data/:index', (req, res) => {
