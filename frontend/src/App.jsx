@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import './index.css';
 import { DataControls } from './DataControls';
 import { FileDropZone } from './FileDropZone';
+import { ActivityLogs } from './ActivityLogs';
 
 export const App = () => {
   const [file, setFile] = useState(null);
@@ -264,6 +265,8 @@ export const App = () => {
             </table>
           </div>
         </section>
+
+        <ActivityLogs />
 
       </div>
     </div>
