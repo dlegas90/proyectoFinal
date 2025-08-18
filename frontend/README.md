@@ -52,4 +52,14 @@ npm run build    # Compila para producción
 - Asegúrate que el backend esté corriendo en `localhost:3001`
 - Puedes modificar los endpoints en `App.jsx` si cambias el puerto/backend
 
+## Logs de actividad
+
+- Visualiza el historial de acciones (subida, creación, edición, eliminación, exportación) en la sección "Logs de actividad".
+- Los logs se obtienen desde el backend y se muestran en tiempo real.
+- Componente: `ActivityLogs.jsx`
+
+```jsx
+<ActivityLogs />
+```
+
 ---

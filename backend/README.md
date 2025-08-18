@@ -1,6 +1,6 @@
 # README BACKEND (backend/README.md)
 
-# Backend - CSV Manager
+# BACKEND - CSV Manager
 
 ## Tecnologías
 
@@ -32,6 +32,9 @@
 - `GET /export`  
   Descarga los registros como CSV
 
+- `GET /logs`  
+  Devuelve un array con el historial de acciones.
+
 ## Instalación y ejecución
 
 ```bash
@@ -44,5 +47,16 @@ npm start
 - Los datos se almacenan en memoria (no persistentes)
 - El backend valida campos requeridos y previene duplicados por nombre
 - El rate limiter protege contra abuso de peticiones
+- El backend registra cada acción importante (subida de archivo, creación, edición, eliminación, exportación) en memoria.
+- Los logs incluyen: fecha/hora, tipo de acción y detalle.
+
+**Ejemplo de log:**
+```json
+{
+  "timestamp": "2025-08-18T18:00:00.000Z",
+  "action": "create",
+  "detail": "Registro creado: {\"id\":1,\"nombre\":\"Camiseta\",\"precio\":\"25000\",\"stock\":\"10\"}"
+}
+```
 
 ---
