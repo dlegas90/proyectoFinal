@@ -13,6 +13,7 @@ Incluye frontend en React + Vite y backend en Express.
 - Paginación y ordenamiento por columnas
 - Exportación de registros a CSV
 - Feedback visual: loading states, mensajes de error y éxito
+- Logs de actividad
 
 ## Estructura
 
