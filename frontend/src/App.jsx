@@ -16,6 +16,7 @@ export const App = () => {
   const [total, setTotal] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
 
 
   const fetchData = async () => {
@@ -106,13 +107,26 @@ export const App = () => {
   };
 
   return (
-    <div className="min-h-screen py-8 bg-gray-50">
+    <div className={darkMode ? "min-h-screen py-8 bg-gray-900 text-gray-100" : "min-h-screen py-8 bg-gray-50"}>
       <div className="max-w-5xl px-4 mx-auto space-y-8">
+        {/* Toggle de tema */}
+        <div className="flex justify-end mb-2">
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className={`px-4 py-2 rounded font-bold shadow transition-colors ${
+              darkMode
+                ? "bg-gray-700 text-yellow-300 hover:bg-gray-800"
+                : "bg-yellow-300 text-gray-900 hover:bg-yellow-400"
+            }`}
+          >
+            {darkMode ? "🌙 Modo Oscuro" : "☀️ Modo Claro"}
+          </button>
+        </div>
 
         {/* Header */}
         <header className="text-center">
-          <h1 className="text-5xl font-extrabold text-indigo-600">CSV Manager</h1>
-          <p className="mt-2 text-gray-600">Carga, edita y exporta tus registros de manera fácil</p>
+          <h1 className={darkMode ? "text-5xl font-extrabold text-yellow-300" : "text-5xl font-extrabold text-indigo-600"}>CSV Manager</h1>
+          <p className={darkMode ? "mt-2 text-gray-300" : "mt-2 text-gray-600"}>Carga, edita y exporta tus registros de manera fácil</p>
         </header>
 
         {/* Upload Section */}
@@ -186,19 +200,21 @@ export const App = () => {
             order={order}
             setOrder={setOrder}
             total={total}
+            darkMode={darkMode}
           />
           <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-gray-200 divide-y divide-gray-200">
+            <table className={`min-w-full border divide-y rounded-lg
+  ${darkMode ? 'bg-gray-900 border-gray-700 divide-gray-700 text-gray-100' : 'bg-white border-gray-200 divide-gray-200 text-gray-900'}`}>
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>NOMBRE</th>
-                  <th>PRECIO</th>
-                  <th>STOCK</th>
-                  <th>Acciones</th>
+                  <th className={darkMode ? "bg-gray-800 text-yellow-300" : "bg-gray-100 text-gray-700"}>ID</th>
+                  <th className={darkMode ? "bg-gray-800 text-yellow-300" : "bg-gray-100 text-gray-700"}>NOMBRE</th>
+                  <th className={darkMode ? "bg-gray-800 text-yellow-300" : "bg-gray-100 text-gray-700"}>PRECIO</th>
+                  <th className={darkMode ? "bg-gray-800 text-yellow-300" : "bg-gray-100 text-gray-700"}>STOCK</th>
+                  <th className={darkMode ? "bg-gray-800 text-yellow-300" : "bg-gray-100 text-gray-700"}>Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className={darkMode ? "divide-y divide-gray-800" : "divide-y divide-gray-100"}>
                 {rows.map((row, i) => (
                   <tr key={i} className="hover:bg-gray-50">
                     <td className="px-4 py-2">
@@ -266,8 +282,7 @@ export const App = () => {
           </div>
         </section>
 
-        <ActivityLogs />
-
+        <ActivityLogs darkMode={darkMode} />
       </div>
     </div>
   );
